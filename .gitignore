@@ -40,3 +40,9 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+/dev.*.log
+/.site-package/
+/*.tar.gz
+/dev.*.log
+/.site-package/
+/*.tar.gz
