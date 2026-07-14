@@ -41,7 +41,7 @@ export default function Home() {
     const draw = (now: number) => {
       const dt = Math.min(.033, (now-last)/1000); last=now; const W=canvas.width, H=canvas.height, d=devicePixelRatio; const g=gameRef.current; g.time += dt;
       if (stateRef.current === "playing") {
-        g.speed += dt*.32; if (g.speed > 20) g.speed -= dt*1.2; g.distance += g.speed*dt; g.score += Math.floor(g.speed*dt*8*g.combo); g.energy=Math.min(100,g.energy+dt*3.2); g.lane += (g.targetLane-g.lane)*Math.min(1,dt*12);
+        g.speed += dt*.32; if (g.speed > 20) g.speed -= dt*1.2; g.distance += g.speed*dt; g.score += Math.floor(g.speed*dt*8*g.combo); g.energy=Math.min(100,g.energy+dt*3.2); g.lane += (g.targetLane-g.lane)*Math.min(1,dt*7.5);
         if (g.y>0 || g.vy>0) { g.y += g.vy*dt; g.vy -= 20*dt; if(g.y<0){g.y=0;g.vy=0;} }
         for(const o of g.obstacles) o.z -= g.speed*dt;
         g.obstacles = g.obstacles.filter(o=>o.z>-4);

@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: neon-rift-hyper-runner
+    runtime: node
+    plan: free
+    buildCommand: npm ci --ignore-scripts && npm run build
+    startCommand: npm start -- --host 0.0.0.0
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 22.13.0
+      - key: WRANGLER_LOG_PATH
+        value: /tmp/wrangler.log
