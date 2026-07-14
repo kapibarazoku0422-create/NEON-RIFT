@@ -12,6 +12,7 @@ export default function Home() {
   const stateRef = useRef<GameState>("menu");
   const [hud, setHud] = useState({ score: 0, combo: 1, energy: 65, speed: 0 });
   const [best, setBest] = useState(0);
+  const gestureRef = useRef({ x: 0, y: 0, lastTap: 0 });
 
   useEffect(() => { setBest(Number(localStorage.getItem("neon-rift-best") || 0)); }, []);
   const move = useCallback((dir: number) => { const g = gameRef.current; g.targetLane = Math.max(-1, Math.min(1, g.targetLane + dir)); }, []);
@@ -21,6 +22,20 @@ export default function Home() {
     gameRef.current = { lane: 0, targetLane: 0, y: 0, vy: 0, speed: 18, distance: 0, score: 0, combo: 1, energy: 65, shake: 0, obstacles: [], spawnAt: 22, time: 0 };
     stateRef.current = "playing"; setState("playing");
   }, []);
+  const gestureStart = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    gestureRef.current.x = e.clientX; gestureRef.current.y = e.clientY;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }, []);
+  const gestureEnd = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (e.pointerType === "mouse") return;
+    const now = performance.now(), dx = e.clientX - gestureRef.current.x, dy = e.clientY - gestureRef.current.y;
+    const ax = Math.abs(dx), ay = Math.abs(dy);
+    if (stateRef.current !== "playing") { start(); gestureRef.current.lastTap = now; return; }
+    if (Math.max(ax, ay) > 34) {
+      if (ax > ay) move(dx > 0 ? 1 : -1); else if (dy < 0) jump(); else dash();
+    } else if (now - gestureRef.current.lastTap < 280) dash(); else jump();
+    gestureRef.current.lastTap = now;
+  }, [dash, jump, move, start]);
 
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -82,12 +97,13 @@ export default function Home() {
   }, [best]);
 
   return <main>
-    <canvas ref={canvasRef} aria-label="NEON RIFT 3Dゲーム画面" />
+    <canvas ref={canvasRef} aria-label="NEON RIFT 3Dゲーム画面" onPointerDown={gestureStart} onPointerUp={gestureEnd} />
     <header><div className="brand">NEON <i>RIFT</i></div><div className="live"><span/> LIVE RUN</div></header>
     {state==="playing" && <section className="hud"><div><small>SCORE</small><strong>{hud.score.toLocaleString().padStart(7,"0")}</strong></div><div><small>FLOW</small><strong className="combo">×{hud.combo}</strong></div><div className="energy"><small>RIFT ENERGY</small><div><span style={{width:`${hud.energy}%`}}/></div></div><div><small>SPEED</small><strong>{Math.round(hud.speed*18)}<em> km/h</em></strong></div></section>}
     {state==="menu" && <section className="panel"><p className="eyebrow">RUN // SURVIVE // ASCEND</p><h1>NEON<br/><span>RIFT</span></h1><p className="lead">崩壊するデータ宇宙を、限界速度で駆け抜けろ。<br/>反射神経だけが、次の1秒をつくる。</p><button onClick={start}>ENTER THE RIFT <b>→</b></button><p className="hint">SPACE / TAP TO START</p></section>}
     {state==="over" && <section className="panel over"><p className="eyebrow">SIGNAL LOST</p><h2>RUN<br/>TERMINATED</h2><div className="result"><span>SCORE <b>{gameRef.current.score.toLocaleString()}</b></span><span>BEST <b>{best.toLocaleString()}</b></span></div><button onClick={start}>REBOOT RUN <b>↻</b></button></section>}
-    <div className="controls"><button aria-label="左へ" onPointerDown={()=>move(-1)}>←</button><button aria-label="ジャンプ" onPointerDown={jump}>↑<small>JUMP</small></button><button aria-label="右へ" onPointerDown={()=>move(1)}>→</button><button className="dash" aria-label="ダッシュ" onPointerDown={dash}>⚡<small>DASH</small></button></div>
+    {state==="playing" && <div className="swipe-help">SWIPE ← → MOVE　↑ JUMP　↓ / DOUBLE TAP DASH</div>}
+    <div className="controls"><div className="move-pad"><button aria-label="左へ" onPointerDown={()=>move(-1)}>←<small>LEFT</small></button><button aria-label="右へ" onPointerDown={()=>move(1)}>→<small>RIGHT</small></button></div><div className="action-pad"><button aria-label="ジャンプ" onPointerDown={jump}>↑<small>JUMP</small></button><button className="dash" aria-label="ダッシュ" onPointerDown={dash}>⚡<small>DASH</small></button></div></div>
     <footer><span>A / D　MOVE</span><span>W / SPACE　JUMP</span><span>SHIFT　RIFT DASH</span></footer>
   </main>;
 }
